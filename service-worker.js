@@ -1,4 +1,4 @@
-const CACHE_NAME = "stresske6-cache-v11";
+const CACHE_NAME = "stresske6-cache-v12";
 const ASSETS = [
   "./",
   "./index.html",
@@ -32,4 +32,5 @@ self.addEventListener("fetch", (event) => {
       return fetch(req).catch(() => cached || new Response("Offline", { status: 503 }));
     })
   );
+
 });
