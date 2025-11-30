@@ -1,36 +1,36 @@
-const CACHE_NAME = "stresske6-cache-v12";
-const ASSETS = [
-  "./",
-  "./index.html",
-  "./manifest.json",
-  "./iconMB-192.png",
-  "./iconMB-512.png"
-];
-
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
-});
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
-  );
-});
-
-self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  event.respondWith(
-    caches.match(req).then((cached) => {
-      return fetch(req).catch(() => cached || new Response("Offline", { status: 503 }));
-    })
-  );
-
-});
+{
+  "id": "https://sayaz.github.io/stresskeenam/",
+  "start_url": "https://sayaz.github.io/stresskeenam/",
+  "scope": "https://sayaz.github.io/stresskeenam/",
+  "name": "Stresskeenam - Muscle & Bulking Tracker",
+  "short_name": "Stresske-6",
+  "description": "Tracker otot dan bulking dengan log sejarah dan autosave.",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    {
+      "src": "iconMB-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "iconMB-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "screenshots/mobile.png",
+      "sizes": "360x640",
+      "type": "image/png"
+    }
+  ]
+}
