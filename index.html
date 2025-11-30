@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Firebase SDKs (compat version) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.11/firebase-firestore-compat.js"></script>
+
+  <meta charset="UTF-8" />
+  <title>Stresskeenam - Muscle & Bulking Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#020617" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="iconMB-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="iconMB-512.png" />
+
+  <style>
+    /* ✅ CSS PREMIUM — SAMA seperti versi awak, dipadatkan supaya muat PART 1 */
+    :root {
+      --bg-main:#020617; --border-subtle:#1f2937; --border-strong:#4b5563;
+      --text-main:#e5e7eb; --text-muted:#9ca3af;
+      --accent1:#6366f1; --accent2:#8b5cf6;
+      --radius-lg:16px; --radius-pill:999px;
+      --shadow-soft:0 18px 40px rgba(15,23,42,0.7);
+      --shadow-subtle:0 10px 25px rgba(15,23,42,0.6);
+    }
+    *{box-sizing:border-box;}
+    html,body{
+      margin:0;padding:0;height:100%;
+      font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+      background:#020617;color:var(--text-main);
+    }
+    body{display:flex;justify-content:center;}
+    #app-root{width:100%;max-width:1120px;min-height:100vh;padding:16px;display:flex;flex-direction:column;}
+    .app-shell{flex:1;border-radius:24px;background:#020617;border:1px solid rgba(148,163,184,0.06);box-shadow:var(--shadow-soft);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+    .app-shell::before{content:"";position:absolute;inset:0;background:
+      radial-gradient(circle at top left,rgba(99,102,241,0.16),transparent 55%),
+      radial-gradient(circle at top right,rgba(139,92,246,0.16),transparent 55%);
+      mix-blend-mode:screen;opacity:.7;pointer-events:none;}
+    .app-inner{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;}
+    .top-bar{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 10px;border-bottom:1px solid rgba(15,23,42,0.9);backdrop-filter:blur(20px);background:linear-gradient(to bottom,rgba(15,23,42,0.92),rgba(15,23,42,0.80));}
+    .app-title{text-transform:uppercase;font-size:1.2rem;font-weight:600;}
+    .app-subtitle{text-transform:uppercase;font-size:.78rem;color:var(--text-muted);}
+    .user-badge{font-size:.8rem;color:var(--text-muted);padding:6px 10px;border-radius:var(--radius-pill);border:1px solid rgba(148,163,184,0.28);max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+    .btn{border-radius:var(--radius-pill);padding:7px 14px;font-size:.8rem;cursor:pointer;background:rgba(15,23,42,0.96);color:var(--text-main);border:1px solid transparent;display:inline-flex;align-items:center;gap:6px;}
+    .btn-primary{background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff;}
+    .btn-ghost{background:rgba(15,23,42,0.86);color:var(--text-muted);border-color:rgba(148,163,184,0.4);}
+    .content{flex:1;display:flex;flex-direction:column;padding:14px 16px 16px;overflow:hidden;}
+    .page{display:none;height:100%;overflow:hidden;}
+    .page.active{display:flex;flex-direction:column;}
+    .page-scroll{flex:1;overflow-y:auto;padding-right:4px;}
+    .card{border-radius:var(--radius-lg);border:1px solid var(--border-subtle);background:#0f172a;padding:16px;box-shadow:var(--shadow-subtle);}
+    .scroll-list{border-radius:12px;border:1px solid #1e293b;background:#0f172a;max-height:260px;overflow-y:auto;}
+    .list-item{padding:8px 12px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center;}
+    .input{width:100%;padding:8px 10px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#fff;}
+    .checkbox{width:16px;height:16px;border-radius:4px;border:1px solid #94a3b8;background:#0f172a;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .checkbox.checked{background:linear-gradient(135deg,var(--accent1),var(--accent2));color:#fff;border:none;}
+  </style>
+</head>
+
+<body>
+  <div id="app-root">
+    <div class="app-shell">
+      <div class="app-inner">
+
+        <!-- ✅ TOP BAR -->
+        <header class="top-bar">
+          <div>
+            <div class="app-title">Stresskeenam</div>
+            <div class="app-subtitle">Muscle & Bulking Tracker</div>
+          </div>
+          <div class="top-right">
+            <div class="user-badge" id="userDisplay">Not signed in</div>
+            <button class="btn btn-ghost btn-sm" id="logHistoryBtn" style="display:none;">Log History</button>
+            <button class="btn btn-ghost btn-sm" id="logoutBtn" style="display:none;">Logout</button>
+          </div>
+        </header>
+
+        <main class="content">
+
+          <!-- ✅ LOGIN PAGE -->
+          <section id="page-login" class="page active">
+            <div class="page-scroll">
+              <div class="card" style="margin-top:10px;">
+                <h2 style="text-align:center;">Sign in to Stresskeenam</h2>
+                <button class="btn btn-primary" id="googleSignInBtn">Continue with Google</button>
+                <div class="divider"></div>
+                <form onsubmit="return false;">
+                  <input id="emailInput" class="input" type="email" placeholder="you@example.com" />
+                  <input id="passwordInput" class="input" type="password" placeholder="Password" />
+                  <div style="display:flex;justify-content:space-between;margin-top:10px;">
+                    <button class="btn btn-ghost btn-sm" id="emailSignInBtn">Sign in</button>
+                    <button class="btn btn-ghost btn-sm" id="emailRegisterBtn">Create account</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </section>
+
+          <!-- ✅ MAIN MENU -->
+          <section id="page-main" class="page">
+            <div class="page-scroll">
+              <div class="card">
+                <h3>Main workspace</h3>
+                <button class="btn btn-primary" id="goWorkoutTrackerBtn">My Muscle Workout Tracker</button>
+                <button class="btn btn-ghost" id="goBulkingTrackerBtn">My Bulking Tracker</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ✅ WORKOUT TREE (Bodyparts → Muscles → Groups → Exercises → Versions) -->
+          <section id="page-workout-bodyparts" class="page">
+            <div class="page-scroll">
+              <button class="btn btn-ghost btn-sm back-btn" data-back="page-main">← Back</button>
+              <div class="card">
+                <h3>Main Body Parts</h3>
+                <button class="btn btn-primary btn-sm" id="addBodypartBtn">Add Bodypart</button>
+                <div class="scroll-list" id="bodypartList"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="page-muscles" class="page">
+            <div class="page-scroll">
+              <button class="btn btn-ghost btn-sm back-btn" data-back="page-workout-bodyparts">← Back</button>
+              <div class="card">
+                <h3 id="musclesBodypartTitle">Muscles</h3>
+                <input id="muscleSearchInput" class="input" placeholder="Search muscles..." />
+                <button class="btn btn-primary btn-sm" id="addMuscleBtn">Add Muscle</button>
+                <div class="scroll-list" id="muscleList"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="page-groups" class="page">
+            <div class="page-scroll">
+              <button class="btn btn-ghost btn-sm back-btn" data-back="page-muscles">← Back</button>
+              <div class="card">
+                <h3 id="groupsMuscleTitle">Groups</h3>
+                <input id="groupSearchInput" class="input" placeholder="Search groups..." />
+                <button class="btn btn-primary btn-sm" id="addGroupBtn">Add Group</button>
+                <div class="scroll-list" id="groupList"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="page-exercises" class="page">
+            <div class="page-scroll">
+              <button class="btn btn-ghost btn-sm back-btn" data-back="page-groups">← Back</button>
+              <div class="card">
+                <h3 id="exercisesGroupTitle">Exercises</h3>
+                <input id="exerciseSearchInput" class="input" placeholder="Search exercises..." />
+                <button class="btn btn-primary btn-sm" id="addExerciseBtn">Add Exercise</button>
+                <div class="scroll-list" id="exerciseList"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="page-versions" class="page">
+            <div class="page-scroll">
+              <button class="btn btn-ghost btn-sm back-btn" data-back="page-exercises">← Back</button>
+              <div class="card">
+                <h3 id="versionsExerciseTitle">Versions</h3>
+                <button class="btn btn-primary btn-sm" id="addVersionBtn">Add Version</button>
+                <div class="scroll-list" id="versionList"></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="page-version-details" class="page">
+            <div class="page-scroll">
+              <button class="btn btn-ghost btn-sm back-btn" data-back="page-versions">← Back</button>
+              <div class="card">
+                <h3 id="versionDetailsTitle">Version Details</h3>
+                <input id="vdExerciseName" class="input" placeholder="Exercise name" />
+                <textarea id="vdNotes" class="input" placeholder="Notes"></textarea>
+                <input id="vdReps" class="input" placeholder="Reps" />
+                <input id="vdSets" class="input" placeholder="Sets" />
+                <input id="vdWeight" class="input" placeholder="Weight (kg)" />
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+                  <span>Completed?</span>
+                  <div id="vdCompletedCheckbox" class="checkbox">✓</div>
+                </div>
+                <button class="btn btn-ghost btn-sm" id="vdForceSaveBtn">Save Now</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ✅ BULKING TRACKER -->
+          <section id="page-bulking" class="page">
+            <div class="page-scroll">
+              <button class="btn btn-ghost btn-sm back-btn" data-back="page-main">← Back</button>
+              <div class="card">
+                <h3>Bulking Tracker</h3>
+                <div id="bulkingTotalDisplay" style="font-size:1.4rem;">0 g</div>
+                <button class="btn btn-primary btn-sm" id="addRiceBtn">Add Rice (g)</button>
+                <div class="scroll-list" id="bulkingHistoryList"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ✅ LOG HISTORY -->
+          <section id="page-logs" class="page">
+            <div class="page-scroll">
+              <button class="btn btn-ghost btn-sm back-btn" data-back="page-main">← Back</button>
+              <div class="card">
+                <h3>Log History</h3>
+                <div class="tabs">
+                  <button class="tab-btn active" data-log-tab="workout">Workout</button>
+                  <button class="tab-btn" data-log-tab="bulking">Bulking</button>
+                </div>
+                <input id="logSearchInput" class="input" placeholder="Search logs..." />
+                <div id="logWorkoutTab" class="stack-v"></div>
+                <div id="logBulkingTab" class="stack-v" style="display:none;"></div>
+              </div>
+            </div>
+          </section>
+
+        </main>
+
+        <footer class="footer-bar">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="status-dot" id="onlineDot"></div>
+            <span id="statusText">Offline-ready PWA · Autosave active</span>
+          </div>
+          <a href="#" class="muted" id="pwaInfoLink">PWA install hint</a>
+        </footer>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========= GLOBAL STATE & HELPERS =========
+    const appState = {
+      user: null,
+      currentBodypart: null,
+      currentMuscle: null,
+      currentGroup: null,
+      currentExercise: null,
+      currentVersion: null,
+      autosaveTimer: null
+    };
+
+    function $(id) { return document.getElementById(id); }
+
+    function switchPage(pageId) {
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      const el = document.getElementById(pageId);
+      if (el) el.classList.add("active");
+    }
+
+    function setUserDisplay(user) {
+      if (!user) {
+        $("userDisplay").textContent = "Not signed in";
+        $("logoutBtn").style.display = "none";
+        $("logHistoryBtn").style.display = "none";
+      } else {
+        $("userDisplay").textContent = user.displayName || user.email || "User";
+        $("logoutBtn").style.display = "inline-flex";
+        $("logHistoryBtn").style.display = "inline-flex";
+      }
+    }
+
+    function formatDateTime(d) {
+      const date = d instanceof Date ? d : new Date(d);
+      return date.toLocaleTimeString() + ", " + date.toLocaleDateString(undefined, {
+        weekday: "long", day: "2-digit", month: "2-digit", year: "numeric"
+      });
+    }
+
+    // ========= PWA HINT & ONLINE STATUS =========
+    $("pwaInfoLink").addEventListener("click", e => {
+      e.preventDefault();
+      alert(
+        "On desktop Chrome: More (⋮) → 'Save and share' → 'Install page as app'.\n" +
+        "On Android Chrome: More (⋮) → 'Add to Home screen'."
+      );
+    });
+
+    window.addEventListener("online", () => {
+      $("onlineDot").style.background = "#22c55e";
+      $("statusText").textContent = "Online · Syncing with Stresskeenam cloud";
+    });
+
+    window.addEventListener("offline", () => {
+      $("onlineDot").style.background = "#f97316";
+      $("statusText").textContent = "Offline mode · Changes will sync when online";
+    });
+
+    // ========= FIREBASE INIT =========
+    const firebaseConfig = {
+      apiKey: "AIzaSyD_l4gFL0sK6-ra_mV3nhr4pIgoO1NItKc",
+      authDomain: "stresskeenam.firebaseapp.com",
+      projectId: "stresskeenam",
+      storageBucket: "stresskeenam.firebasestorage.app",
+      messagingSenderId: "220475383672",
+      appId: "1:220475383672:web:02713e126c4c45f1adb28d",
+      measurementId: "G-SHPNHT7110"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // ========= FIRESTORE PATH HELPERS =========
+    function userRoot() {
+      return db.collection("users").doc(appState.user.uid);
+    }
+    function workoutRoot() {
+      return userRoot().collection("workout").doc("bodypartsRoot").collection("bodyparts");
+    }
+    function musclesCol(bpId) {
+      return workoutRoot().doc(bpId).collection("muscles");
+    }
+    function groupsCol(bpId, musId) {
+      return musclesCol(bpId).doc(musId).collection("groups");
+    }
+    function exercisesCol(bpId, musId, grpId) {
+      return groupsCol(bpId, musId).doc(grpId).collection("exercises");
+    }
+    function versionsCol(bpId, musId, grpId, exId) {
+      return exercisesCol(bpId, musId, grpId).doc(exId).collection("versions");
+    }
+    function bulkingCol() {
+      return userRoot().collection("bulking").doc("entriesHolder").collection("entries");
+    }
+    function logsRoot() {
+      return userRoot().collection("logs");
+    }
+
+    // ========= AUTH STATE LISTENER =========
+    auth.onAuthStateChanged(async user => {
+      appState.user = user;
+      setUserDisplay(user);
+
+      if (!user) {
+        switchPage("page-login");
+        return;
+      }
+
+      switchPage("page-main");
+      await Promise.all([
+        loadBodyparts(),
+        loadBulking(),
+        loadLogs()
+      ]);
+    });
+
+    // ========= AUTH HANDLERS =========
+    $("googleSignInBtn").onclick = async () => {
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await auth.signInWithPopup(provider);
+      } catch (err) {
+        alert("Google sign-in failed: " + err.message);
+      }
+    };
+
+    $("emailSignInBtn").onclick = async () => {
+      const email = $("emailInput").value.trim();
+      const password = $("passwordInput").value.trim();
+      if (!email || !password) return alert("Please enter email and password.");
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (err) {
+        alert("Email sign-in failed: " + err.message);
+      }
+    };
+
+    $("emailRegisterBtn").onclick = async () => {
+      const email = $("emailInput").value.trim();
+      const password = $("passwordInput").value.trim();
+      if (!email || !password) return alert("Please enter email and password.");
+      try {
+        await auth.createUserWithEmailAndPassword(email, password);
+      } catch (err) {
+        alert("Registration failed: " + err.message);
+      }
+    };
+
+    $("logoutBtn").onclick = () => auth.signOut();
+
+    // ========= NAVIGATION =========
+    $("goWorkoutTrackerBtn").onclick = () => {
+      switchPage("page-workout-bodyparts");
+      loadBodyparts();
+    };
+    $("goBulkingTrackerBtn").onclick = () => {
+      switchPage("page-bulking");
+      loadBulking();
+    };
+    $("logHistoryBtn").onclick = () => {
+      switchPage("page-logs");
+      loadLogs();
+    };
+
+    document.querySelectorAll(".back-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = btn.getAttribute("data-back");
+        switchPage(target);
+        if (target === "page-workout-bodyparts") loadBodyparts();
+        if (target === "page-muscles") loadMuscles();
+        if (target === "page-groups") loadGroups();
+        if (target === "page-exercises") loadExercises();
+        if (target === "page-versions") loadVersions();
+        if (target === "page-bulking") loadBulking();
+        if (target === "page-logs") loadLogs();
+      });
+    });
+
+    // ========= WORKOUT: BODYPARTS =========
+    async function loadBodyparts() {
+      const col = workoutRoot();
+      const list = $("bodypartList");
+      list.innerHTML = "";
+      const snap = await col.orderBy("name").get();
+      if (snap.empty) {
+        list.innerHTML = `<div class="list-item"><span class="muted">No bodyparts yet. Add one.</span></div>`;
+        return;
+      }
+      snap.forEach(doc => {
+        const data = doc.data();
+        const row = document.createElement("div");
+        row.className = "list-item";
+        row.innerHTML = `
+          <div class="list-item-main">
+            <div class="list-item-title">${data.name}</div>
+            <div class="list-item-sub">Tap to open muscles.</div>
+          </div>
+          <div class="list-item-actions">
+            <button class="btn btn-ghost btn-xs" data-edit>Edit</button>
+            <button class="btn btn-ghost btn-xs" data-del>Delete</button>
+          </div>
+        `;
+        row.onclick = e => {
+          if (e.target.dataset.edit || e.target.dataset.del) return;
+          appState.currentBodypart = { id: doc.id, name: data.name };
+          $("musclesBodypartTitle").textContent = data.name;
+          switchPage("page-muscles");
+          loadMuscles();
+        };
+        row.querySelector("[data-edit]").onclick = async e => {
+          e.stopPropagation();
+          const name = prompt("Rename bodypart:", data.name);
+          if (!name) return;
+          await col.doc(doc.id).update({ name });
+          loadBodyparts();
+        };
+        row.querySelector("[data-del]").onclick = async e => {
+          e.stopPropagation();
+          if (!confirm("Delete this bodypart and everything under it?")) return;
+          await col.doc(doc.id).delete();
+          loadBodyparts();
+        };
+        list.appendChild(row);
+      });
+    }
+
+    $("addBodypartBtn").onclick = async () => {
+      const name = prompt("Bodypart name:");
+      if (!name) return;
+      await workoutRoot().add({ name, uid: appState.user.uid });
+      loadBodyparts();
+    };
+
+    // ========= WORKOUT: MUSCLES =========
+    async function loadMuscles() {
+      const bp = appState.currentBodypart;
+      if (!bp) return;
+      const col = musclesCol(bp.id);
+      const list = $("muscleList");
+      list.innerHTML = "";
+      const search = $("muscleSearchInput").value.toLowerCase();
+      const snap = await col.orderBy("name").get();
+      let count = 0;
+      snap.forEach(doc => {
+        const data = doc.data();
+        const name = data.name || "Unnamed muscle";
+        if (search && !name.toLowerCase().includes(search)) return;
+        count++;
+        const row = document.createElement("div");
+        row.className = "list-item";
+        row.innerHTML = `
+          <div class="list-item-main">
+            <div class="list-item-title">${name}</div>
+            <div class="list-item-sub">Tap to open groups.</div>
+          </div>
+          <div class="list-item-actions">
+            <button class="btn btn-ghost btn-xs" data-edit>Edit</button>
+            <button class="btn btn-ghost btn-xs" data-del>Delete</button>
+          </div>
+        `;
+        row.onclick = e => {
+          if (e.target.dataset.edit || e.target.dataset.del) return;
+          appState.currentMuscle = { id: doc.id, name };
+          $("groupsMuscleTitle").textContent = name;
+          switchPage("page-groups");
+          loadGroups();
+        };
+        row.querySelector("[data-edit]").onclick = async e => {
+          e.stopPropagation();
+          const newName = prompt("Rename muscle:", name);
+          if (!newName) return;
+          await col.doc(doc.id).update({ name: newName });
+          loadMuscles();
+        };
+        row.querySelector("[data-del]").onclick = async e => {
+          e.stopPropagation();
+          if (!confirm("Delete this muscle and everything under it?")) return;
+          await col.doc(doc.id).delete();
+          loadMuscles();
+        };
+        list.appendChild(row);
+      });
+      if (!count) list.innerHTML = `<div class="list-item"><span class="muted">No muscles yet. Add one.</span></div>`;
+    }
+    $("muscleSearchInput").oninput = loadMuscles;
+
+    $("addMuscleBtn").onclick = async () => {
+      const bp = appState.currentBodypart;
+      if (!bp) return;
+      const name = prompt("Muscle name:");
+      if (!name) return;
+      await musclesCol(bp.id).add({ name, uid: appState.user.uid });
+      loadMuscles();
+    };
+
+    // ========= WORKOUT: GROUPS =========
+    async function loadGroups() {
+      const bp = appState.currentBodypart;
+      const mus = appState.currentMuscle;
+      if (!bp || !mus) return;
+      const col = groupsCol(bp.id, mus.id);
+      const list = $("groupList");
+      list.innerHTML = "";
+      const search = $("groupSearchInput").value.toLowerCase();
+      const snap = await col.orderBy("name").get();
+      let count = 0;
+      snap.forEach(doc => {
+        const data = doc.data();
+        const name = data.name || "Unnamed group";
+        if (search && !name.toLowerCase().includes(search)) return;
+        count++;
+        const row = document.createElement("div");
+        row.className = "list-item";
+        row.innerHTML = `
+          <div class="list-item-main">
+            <div class="list-item-title">${name}</div>
+            <div class="list-item-sub">Cardio, Isometric, Strength, or custom.</div>
+          </div>
+          <div class="list-item-actions">
+            <button class="btn btn-ghost btn-xs" data-edit>Edit</button>
+            <button class="btn btn-ghost btn-xs" data-del>Delete</button>
+          </div>
+        `;
+        row.onclick = e => {
+          if (e.target.dataset.edit || e.target.dataset.del) return;
+          appState.currentGroup = { id: doc.id, name };
+          $("exercisesGroupTitle").textContent = name;
+          switchPage("page-exercises");
+          loadExercises();
+        };
+        row.querySelector("[data-edit]").onclick = async e => {
+          e.stopPropagation();
+          const newName = prompt("Rename group:", name);
+          if (!newName) return;
+          await col.doc(doc.id).update({ name: newName });
+          loadGroups();
+        };
+        row.querySelector("[data-del]").onclick = async e => {
+          e.stopPropagation();
+          if (!confirm("Delete this group and everything under it?")) return;
+          await col.doc(doc.id).delete();
+          loadGroups();
+        };
+        list.appendChild(row);
+      });
+      if (!count) list.innerHTML = `<div class="list-item"><span class="muted">No groups yet. Add one.</span></div>`;
+    }
+    $("groupSearchInput").oninput = loadGroups;
+
+    $("addGroupBtn").onclick = async () => {
+      const bp = appState.currentBodypart;
+      const mus = appState.currentMuscle;
+      if (!bp || !mus) return;
+      const name = prompt("Group name:");
+      if (!name) return;
+      await groupsCol(bp.id, mus.id).add({ name, uid: appState.user.uid });
+      loadGroups();
+    };
+
+    // ========= WORKOUT: EXERCISES =========
+    async function loadExercises() {
+      const bp = appState.currentBodypart;
+      const mus = appState.currentMuscle;
+      const grp = appState.currentGroup;
+      if (!bp || !mus || !grp) return;
+      const col = exercisesCol(bp.id, mus.id, grp.id);
+      const list = $("exerciseList");
+      list.innerHTML = "";
+      const search = $("exerciseSearchInput").value.toLowerCase();
+      const snap = await col.orderBy("name").get();
+      let count = 0;
+      snap.forEach(doc => {
+        const data = doc.data();
+        const name = data.name || "Unnamed exercise";
+        if (search && !name.toLowerCase().includes(search)) return;
+        count++;
+        const row = document.createElement("div");
+        row.className = "list-item";
+        row.innerHTML = `
+          <div class="list-item-main">
+            <div class="list-item-title">${name}</div>
+            <div class="list-item-sub">Tap to open versions.</div>
+          </div>
+          <div class="list-item-actions">
+            <button class="btn btn-ghost btn-xs" data-edit>Edit</button>
+            <button class="btn btn-ghost btn-xs" data-del>Delete</button>
+          </div>
+        `;
+        row.onclick = e => {
+          if (e.target.dataset.edit || e.target.dataset.del) return;
+          appState.currentExercise = { id: doc.id, name };
+          $("versionsExerciseTitle").textContent = name;
+          switchPage("page-versions");
+          loadVersions();
+        };
+        row.querySelector("[data-edit]").onclick = async e => {
+          e.stopPropagation();
+          const newName = prompt("Rename exercise:", name);
+          if (!newName) return;
+          await col.doc(doc.id).update({ name: newName });
+          loadExercises();
+        };
+        row.querySelector("[data-del]").onclick = async e => {
+          e.stopPropagation();
+          if (!confirm("Delete this exercise and all versions?")) return;
+          await col.doc(doc.id).delete();
+          loadExercises();
+        };
+        list.appendChild(row);
+      });
+      if (!count) list.innerHTML = `<div class="list-item"><span class="muted">No exercises yet. Add one.</span></div>`;
+    }
+    $("exerciseSearchInput").oninput = loadExercises;
+
+    $("addExerciseBtn").onclick = async () => {
+      const bp = appState.currentBodypart;
+      const mus = appState.currentMuscle;
+      const grp = appState.currentGroup;
+      if (!bp || !mus || !grp) return;
+      const name = prompt("Exercise name:");
+      if (!name) return;
+      await exercisesCol(bp.id, mus.id, grp.id).add({ name, uid: appState.user.uid });
+      loadExercises();
+    };
+
+    // ========= WORKOUT: VERSIONS =========
+    async function loadVersions() {
+      const bp = appState.currentBodypart;
+      const mus = appState.currentMuscle;
+      const grp = appState.currentGroup;
+      const ex = appState.currentExercise;
+      if (!bp || !mus || !grp || !ex) return;
+      const col = versionsCol(bp.id, mus.id, grp.id, ex.id);
+      const list = $("versionList");
+      list.innerHTML = "";
+      const snap = await col.orderBy("name").get();
+      let count = 0;
+      snap.forEach(doc => {
+        const data = doc.data();
+        const name = data.name || "Unnamed version";
+        count++;
+        const completed = data.completed === true;
+        const row = document.createElement("div");
+        row.className = "list-item";
+        row.innerHTML = `
+          <div class="list-item-main">
+            <div class="list-item-title">${name}</div>
+            <div class="list-item-sub">${completed ? "Marked as completed" : "Tap to edit details"}</div>
+          </div>
+          <div class="list-item-actions">
+            <span class="chip">${completed ? "Done" : "Active"}</span>
+            <button class="btn btn-ghost btn-xs" data-edit>Edit</button>
+            <button class="btn btn-ghost btn-xs" data-del>Delete</button>
+          </div>
+        `;
+        row.onclick = e => {
+          if (e.target.dataset.edit || e.target.dataset.del) return;
+          appState.currentVersion = { id: doc.id };
+          openVersionDetails();
+        };
+        row.querySelector("[data-edit]").onclick = async e => {
+          e.stopPropagation();
+          const newName = prompt("Rename version:", name);
+          if (!newName) return;
+          await col.doc(doc.id).update({ name: newName });
+          loadVersions();
+        };
+        row.querySelector("[data-del]").onclick = async e => {
+          e.stopPropagation();
+          if (!confirm("Delete this version?")) return;
+          await col.doc(doc.id).delete();
+          loadVersions();
+        };
+        list.appendChild(row);
+      });
+      if (!count) list.innerHTML = `<div class="list-item"><span class="muted">No versions yet. Add one.</span></div>`;
+    }
+
+    $("addVersionBtn").onclick = async () => {
+      const bp = appState.currentBodypart;
+      const mus = appState.currentMuscle;
+      const grp = appState.currentGroup;
+      const ex = appState.currentExercise;
+      if (!bp || !mus || !grp || !ex) return;
+      const name = prompt("Version name:");
+      if (!name) return;
+      const col = versionsCol(bp.id, mus.id, grp.id, ex.id);
+      const docRef = await col.add({
+        name,
+        exerciseName: ex.name,
+        notes: "",
+        reps: "",
+        sets: "",
+        weightKg: "",
+        completed: false,
+        uid: appState.user.uid
+      });
+      appState.currentVersion = { id: docRef.id };
+      openVersionDetails();
+    };
+
+    async function openVersionDetails() {
+      const bp = appState.currentBodypart;
+      const mus = appState.currentMuscle;
+      const grp = appState.currentGroup;
+      const ex = appState.currentExercise;
+      const v  = appState.currentVersion;
+      if (!bp || !mus || !grp || !ex || !v) return;
+      const col = versionsCol(bp.id, mus.id, grp.id, ex.id);
+      const doc = await col.doc(v.id).get();
+      const data = doc.data() || {};
+      $("versionDetailsTitle").textContent = data.name || "Version details";
+      $("vdExerciseName").value = data.exerciseName || ex.name || "";
+      $("vdNotes").value = data.notes || "";
+      $("vdReps").value = data.reps || "";
+      $("vdSets").value = data.sets || "";
+      $("vdWeight").value = data.weightKg || "";
+      const box = $("vdCompletedCheckbox");
+      if (data.completed) box.classList.add("checked");
+      else box.classList.remove("checked");
+      switchPage("page-version-details");
+    }
+
+    function collectVersionDetailsFromUI() {
+      return {
+        exerciseName: $("vdExerciseName").value.trim(),
+        notes: $("vdNotes").value.trim(),
+        reps: $("vdReps").value.trim(),
+        sets: $("vdSets").value.trim(),
+        weightKg: $("vdWeight").value.trim(),
+        completed: $("vdCompletedCheckbox").classList.contains("checked"),
+        uid: appState.user.uid
+      };
+    }
+
+    async function saveVersionDetails(options = { logIfCompleted: true }) {
+      const bp = appState.currentBodypart;
+      const mus = appState.currentMuscle;
+      const grp = appState.currentGroup;
+      const ex = appState.currentExercise;
+      const v  = appState.currentVersion;
+      if (!bp || !mus || !grp || !ex || !v) return;
+      const col = versionsCol(bp.id, mus.id, grp.id, ex.id);
+      const patch = collectVersionDetailsFromUI();
+      patch.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+      await col.doc(v.id).set(patch, { merge: true });
+
+      if (patch.completed && options.logIfCompleted) {
+        await logsRoot().collection("workoutLogs").add({
+          uid: appState.user.uid,
+          bodypartName: bp.name,
+          muscleName: mus.name,
+          groupName: grp.name,
+          exerciseName: ex.name,
+          versionName: $("versionDetailsTitle").textContent,
+          notes: patch.notes,
+          reps: patch.reps,
+          sets: patch.sets,
+          weightKg: patch.weightKg,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }
+
+    function scheduleAutosave() {
+      if (appState.autosaveTimer) clearTimeout(appState.autosaveTimer);
+      appState.autosaveTimer = setTimeout(() => {
+        saveVersionDetails({ logIfCompleted: false });
+        $("statusText").textContent = "Saved draft to cloud";
+      }, 800);
+      $("statusText").textContent = "Typing… autosave pending";
+    }
+
+    ["vdExerciseName","vdNotes","vdReps","vdSets","vdWeight"].forEach(id => {
+      $(id).addEventListener("input", scheduleAutosave);
+    });
+
+    $("vdCompletedCheckbox").addEventListener("click", () => {
+      $("vdCompletedCheckbox").classList.toggle("checked");
+      saveVersionDetails({ logIfCompleted: true });
+    });
+
+    $("vdForceSaveBtn").addEventListener("click", async () => {
+      await saveVersionDetails({ logIfCompleted: true });
+      $("statusText").textContent = "Saved to Stresskeenam cloud";
+    });
+
+    // ========= BULKING TRACKER =========
+    async function loadBulking() {
+      const col = bulkingCol();
+      const list = $("bulkingHistoryList");
+      const totalEl = $("bulkingTotalDisplay");
+      list.innerHTML = "";
+      totalEl.textContent = "0 g";
+      const snap = await col.orderBy("createdAt","desc").limit(200).get();
+      const today = new Date();
+      let totalToday = 0;
+      snap.forEach(doc => {
+        const data = doc.data();
+        const grams = Number(data.grams || 0);
+        const ts = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+        if (ts.getDate()===today.getDate() && ts.getMonth()===today.getMonth() && ts.getFullYear()===today.getFullYear()) {
+          totalToday += grams;
+        }
+        const row = document.createElement("div");
+        row.className = "log-entry";
+        row.innerHTML = `
+          <div class="log-main">
+            <div>Rice: <strong>${grams} g</strong></div>
+            <div class="log-meta">${formatDateTime(ts)}</div>
+          </div>
+          <div>
+            <button class="btn btn-ghost btn-xs" data-del>Delete</button>
+          </div>
+        `;
+        row.querySelector("[data-del]").onclick = async () => {
+          if (!confirm("Delete this rice entry?")) return;
+          await col.doc(doc.id).delete();
+          loadBulking();
+          loadLogs();
+        };
+        list.appendChild(row);
+      });
+      totalEl.textContent = totalToday + " g";
+    }
+
+    $("addRiceBtn").onclick = async () => {
+      const col = bulkingCol();
+      const input = prompt("Tambah Jumlah Nasi (g):");
+      if (!input) return;
+      const grams = Number(input);
+      if (!Number.isFinite(grams) || grams <= 0) return alert("Please enter a positive number.");
+      await col.add({
+        grams,
+        uid: appState.user.uid,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await logsRoot().collection("bulkingLogs").add({
+        grams,
+        uid: appState.user.uid,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      loadBulking();
+      loadLogs();
+    };
+
+    // ========= LOG HISTORY =========
+    async function loadLogs() {
+      await Promise.all([loadWorkoutLogs(), loadBulkingLogs()]);
+    }
+
+    async function loadWorkoutLogs() {
+      const col = logsRoot().collection("workoutLogs");
+      const container = $("logWorkoutTab");
+      container.innerHTML = "";
+      const snap = await col.orderBy("createdAt","desc").limit(200).get();
+      if (snap.empty) {
+        container.innerHTML = `<div class="muted">No workout logs yet.</div>`;
+        return;
+      }
+      snap.forEach(doc => {
+        const data = doc.data();
+        const ts = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+        const main = [data.bodypartName,data.muscleName,data.exerciseName,data.versionName].filter(Boolean).join(" • ");
+        const metaPieces = [];
+        if (data.reps) metaPieces.push("Reps: "+data.reps);
+        if (data.sets) metaPieces.push("Sets: "+data.sets);
+        if (data.weightKg) metaPieces.push("Weight: "+data.weightKg+" kg");
+        const meta = metaPieces.join(" · ") || "No detailed metrics";
+        const row = document.createElement("div");
+        row.className = "log-entry";
+        row.innerHTML = `
+          <div class="log-main">
+            <div>${main || "Exercise version completed"}</div>
+            <div class="log-meta">${meta}</div>
+            <div class="log-meta">${formatDateTime(ts)}</div>
+          </div>
+          <div>
+            <button class="btn btn-ghost btn-xs" data-del>Delete</button>
+          </div>
+        `;
+        row.querySelector("[data-del]").onclick = async () => {
+          if (!confirm("Delete this workout log?")) return;
+          await col.doc(doc.id).delete();
+          loadWorkoutLogs();
+        };
+        container.appendChild(row);
+      });
+    }
+
+    async function loadBulkingLogs() {
+      const col = logsRoot().collection("bulkingLogs");
+      const container = $("logBulkingTab");
+      container.innerHTML = "";
+      const snap = await col.orderBy("createdAt","desc").limit(200).get();
+      if (snap.empty) {
+        container.innerHTML = `<div class="muted">No bulking logs yet.</div>`;
+        return;
+      }
+      snap.forEach(doc => {
+        const data = doc.data();
+        const ts = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
+        const grams = data.grams || 0;
+        const row = document.createElement("div");
+        row.className = "log-entry";
+        row.innerHTML = `
+          <div class="log-main">
+            <div>Rice: <strong>${grams} g</strong></div>
+            <div class="log-meta">${formatDateTime(ts)}</div>
+          </div>
+          <div>
+            <button class="btn btn-ghost btn-xs" data-del>Delete</button>
+          </div>
+        `;
+        row.querySelector("[data-del]").onclick = async () => {
+          if (!confirm("Delete this bulking log?")) return;
+          await col.doc(doc.id).delete();
+          loadBulkingLogs();
+        };
+        container.appendChild(row);
+      });
+    }
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const tab = btn.getAttribute("data-log-tab");
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        if (tab === "workout") {
+          $("logWorkoutTab").style.display = "flex";
+          $("logBulkingTab").style.display = "none";
+        } else {
+          $("logWorkoutTab").style.display = "none";
+          $("logBulkingTab").style.display = "flex";
+        }
+      });
+    });
+
+    $("logSearchInput").addEventListener("input", () => {
+      const q = $("logSearchInput").value.toLowerCase();
+      ["logWorkoutTab","logBulkingTab"].forEach(id => {
+        const container = $(id);
+        Array.from(container.children).forEach(child => {
+          const text = child.textContent.toLowerCase();
+          child.style.display = text.includes(q) ? "" : "none";
+        });
+      });
+    });
+  </script>
+  <!-- ✅ SERVICE WORKER REGISTER -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("service-worker.js")
+          .catch(err => console.error("Service Worker failed:", err));
+      });
+    }
+  </script>
+
+</body>
+</html>
