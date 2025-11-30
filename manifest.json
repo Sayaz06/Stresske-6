@@ -1,0 +1,23 @@
+{
+  "name": "Stresske-6",
+  "short_name": "Stresske-6",
+  "id": "https://sayaz.github.io/stresske-6/",
+  "start_url": "https://sayaz06.github.io/stresske-6/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "description": "Muscle & Bulking Tracker focused on structured workouts and simple rice-based bulking logs.",
+  "icons": [
+    {
+      "src": "iconMB-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "iconMB-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
