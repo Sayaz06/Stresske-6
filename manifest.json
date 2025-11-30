@@ -1,12 +1,13 @@
 {
-  "name": "Stresske-6",
+  "id": "https://sayaz.github.io/Stresske-6/",
+  "start_url": "https://sayaz.github.io/Stresske-6/",
+  "scope": "https://sayaz.github.io/Stresske-6/",
+  "name": "Stresske-6 - Muscle & Bulking Tracker",
   "short_name": "Stresske-6",
-  "start_url": "/",
-  "scope": "/",
+  "description": "Tracker otot dan bulking dengan log sejarah dan autosave.",
   "display": "standalone",
   "background_color": "#020617",
   "theme_color": "#020617",
-  "description": "Muscle & Bulking Tracker focused on structured workouts and simple rice-based bulking logs.",
   "icons": [
     {
       "src": "iconMB-192.png",
@@ -18,7 +19,7 @@
       "sizes": "512x512",
       "type": "image/png"
     }
-   ],
+  ],
   "screenshots": [
     {
       "src": "screenshots/wide.png",
@@ -33,6 +34,3 @@
     }
   ]
 }
-
-
-
