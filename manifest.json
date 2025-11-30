@@ -1,8 +1,7 @@
 {
   "name": "Stresske-6",
   "short_name": "Stresske-6",
-  "id": "https://sayaz.github.io/stresske-6/",
-  "start_url": "https://sayaz06.github.io/stresske-6/",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#020617",
