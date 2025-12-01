@@ -1,5 +1,5 @@
 // ✅ Service Worker untuk Stresske-6
-const CACHE_NAME = "stresske6-cache-v20";
+const CACHE_NAME = "stresske6-cache-v21";
 
 const ASSETS = [
   "./",
@@ -46,3 +46,4 @@ self.addEventListener("fetch", event => {
     })
   );
 });
+
